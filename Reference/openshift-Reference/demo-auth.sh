@@ -55,28 +55,28 @@ function watch_deploy()
 
 project_name=krb-ex-test
 
-oc new-project $project_name
+oc project $project_name
 
 #oc new-app -f krb5-server-deploy.yaml -p NAME=test
 oc new-app -f example-client-deploy.yaml -p PREFIX=test -p KDC_SERVER=test
-#
-## wait for Pods to start and be running
-#watch_deploy test $project_name
-#watch_deploy test-example-app $project_name
-#
-#server_pod=$(oc get pod -l app=krb5-server -o name)
-#admin_pwd=$(oc logs -c kdc $server_pod | head -n 1 | sed 's/.*Your\ KDC\ password\ is\ //')
-#
-#app_pod=$(oc get pods -l app=client -o name)
-#
-#principal=$(oc set env $app_pod --list | grep OPTIONS | grep -o "[a-z]*\@[A-Z\.]*")
-#realm=$(echo $principal | sed 's/[a-z]*\@//')
-#
-## create principal
-#echo $admin_pwd | oc rsh -c kinit-sidecar $app_pod kadmin -r $realm -p admin/admin@$realm -q "addprinc -pw redhat -requires_preauth $principal"
-#
-## create keytab
-#echo $admin_pwd | oc rsh -c kinit-sidecar $app_pod kadmin -r $realm -p admin/admin@$realm -q "ktadd $principal"
-#
-## watch app logs
-#oc logs -f $app_pod -c example-app
+
+# wait for Pods to start and be running
+watch_deploy test $project_name
+watch_deploy test-example-app $project_name
+
+server_pod=$(oc get pod -l app=krb5-server -o name)
+admin_pwd=$(oc logs -c kdc $server_pod | head -n 1 | sed 's/.*Your\ KDC\ password\ is\ //')
+
+app_pod=$(oc get pods -l app=client -o name)
+
+principal=$(oc set env $app_pod --list | grep OPTIONS | grep -o "[a-z]*\@[A-Z\.]*")
+realm=$(echo $principal | sed 's/[a-z]*\@//')
+
+# create principal
+echo $admin_pwd | oc rsh -c kinit-sidecar $app_pod kadmin -r $realm -p admin/admin@$realm -q "addprinc -pw redhat -requires_preauth $principal"
+
+# create keytab
+echo $admin_pwd | oc rsh -c kinit-sidecar $app_pod kadmin -r $realm -p admin/admin@$realm -q "ktadd $principal"
+
+# watch app logs
+oc logs -f $app_pod -c example-app

@@ -1,12 +1,12 @@
-apiVersion: v1
+apiVersion: template.openshift.io/v1
 kind: Template
 metadata:
   creationTimestamp: null
   name: client
 parameters:
 - name: PREFIX
-  displayName: Prefix
-  description: Prefix to uniquely identify the client app and its resources
+  displayName: KRB5
+  description: VRP KRB5
   required: true
 - name: IMAGE
   displayName: KInit Sidecar Image
