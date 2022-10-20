@@ -1,0 +1,1 @@
+java -Djava.security.auth.login.config=SQLSERVER.conf -Djava.security.krb5.conf=/etc/krb5.conf KerberosJDBCClient

@@ -1,0 +1,141 @@
+apiVersion: v1
+kind: DeploymentConfig
+metadata:
+  name: ${USERVICE_NAME_WITH_IE_VER}
+  namespace: ${USERVICE_NAMESPACE}
+  labels:
+    app: ${USERVICE_NAME_WITH_IE_VER}
+  annotations:
+    openshift.io/generated-by: Jenkins
+spec:
+  strategy:
+    type: Rolling
+    rollingParams:
+      updatePeriodSeconds: 1
+      intervalSeconds: 1
+      timeoutSeconds: 600
+      maxUnavailable: 25%
+      maxSurge: 25%
+    resources: {}
+    activeDeadlineSeconds: 21600
+  replicas: ${REPLICAS}
+  triggers: []
+  test: false
+  selector:
+    deploymentconfig: ${USERVICE_NAME_WITH_IE_VER}
+  template:
+    metadata:
+      labels:
+        app: ${USERVICE_NAME_WITH_IE_VER}
+        deploymentconfig: ${USERVICE_NAME_WITH_IE_VER}
+    spec:
+      volumes:
+        - name: volume-configmap
+          configMap:
+            name: ${USERVICE_NAME_WITH_IE_VER}
+            defaultMode: 420
+        - name: volume-secret
+          secret:
+            secretName: ${JAVA_OPTIONS_SECRET}
+            defaultMode: 420
+        - name: volume-rds
+          secret:
+            secretName: ${RDS_SECRET}
+            defaultMode: 420
+      containers:
+        - name: ${USERVICE_NAME_WITH_IE_VER}
+          image: >-
+           docker-registry.default.svc:5000/${USERVICE_NAMESPACE}/${USERVICE_NAME_WITH_IE_VER}:${USERVICE_TAG}
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+            - containerPort: 8443
+              protocol: TCP
+          env:
+            - name: JAVA_OPTIONS
+              valueFrom:
+                secretKeyRef:
+                  name: ${JAVA_OPTIONS_SECRET}
+                  key: JAVA_OPTIONS
+            - name: SIGNDB_KEY_FILE_PWD
+              valueFrom:
+                secretKeyRef:
+                  key: SIGNDB_KEY_FILE_PWD
+                  name: ${JAVA_OPTIONS_SECRET}
+            - name: JWT4_KEY_FILE_PWD
+              valueFrom:
+                secretKeyRef:
+                  key: JWT4_KEY_FILE_PWD
+                  name: ${JAVA_OPTIONS_SECRET}
+            - name: SERVER_SSL_KEYSTORE_PWD
+              valueFrom:
+                secretKeyRef:
+                  key: SERVER_SSL_KEYSTORE_PWD
+                  name: ${JAVA_OPTIONS_SECRET}
+            - name: SERVER_SSL_TRUSTSTORE_PWD
+              valueFrom:
+                secretKeyRef:
+                  key: SERVER_SSL_TRUSTSTORE_PWD
+                  name: ${JAVA_OPTIONS_SECRET}
+            - name: JAVAX_SSL_KEYSTORE_PWD
+              valueFrom:
+                secretKeyRef:
+                  key: JAVAX_SSL_KEYSTORE_PWD
+                  name: ${JAVA_OPTIONS_SECRET}
+            - name: JAVAX_SSL_TRUSTSTORE_PWD
+              valueFrom:
+                secretKeyRef:
+                  key: JAVAX_SSL_TRUSTSTORE_PWD
+                  name: ${JAVA_OPTIONS_SECRET}
+            - name: RDS_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: ${RDS_SECRET}
+                  key: ${RDS_SECRET_USERNAME_KEY}
+            - name: RDS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ${RDS_SECRET}
+                  key: ${RDS_SECRET_PASSWORD_KEY}
+          volumeMounts:
+            - name: volume-configmap
+              mountPath: /etc/config
+            - name: volume-secret
+              readOnly: true
+              mountPath: /secret
+            - name: volume-rds
+              readOnly: true
+              mountPath: /rds
+          resources:
+            limits:
+              memory: ${MEMORY_LIMIT}
+            requests:
+              memory: ${MEMORY_REQUEST}
+          livenessProbe:
+            httpGet:
+              path: >-
+                /actuator/health
+              port: 8081
+              scheme: HTTPS
+            initialDelaySeconds: ${INITIAL_DELAY_IN_SECONDS}
+            timeoutSeconds: 2
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: >-
+                /actuator/health
+              port: 8081
+              scheme: HTTPS
+            initialDelaySeconds: ${INITIAL_DELAY_IN_SECONDS}
+            timeoutSeconds: 2
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+          terminationMessagePath: /dev/termination-log
+          imagePullPolicy: Always
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      securityContext: {}

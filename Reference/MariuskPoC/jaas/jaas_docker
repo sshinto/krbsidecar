@@ -1,0 +1,31 @@
+FROM artifactory.nbsnet.co.uk/docker/ubi7/ubi-init
+
+MAINTAINER marius.farcas@NBS
+
+USER root
+
+ENV CLASSPATH=/mssql-jdbc-11.2.0.jre8.jar:${CLASSPATH} \
+    HOME=/opt/app-root/src
+
+ADD jkrb5.conf /etc/
+ADD mssql-jdbc-11.2.0.jre8.jar /
+
+RUN yum install --setopt=tsflags=nodocs java-1.8.0-openjdk java-1.8.0-openjdk-devel -y --disablerepo=ubi* --nogpgcheck && \
+    yum update --setopt=tsflags=nodocs -y --disablerepo=ubi* && \
+    yum clean all && \
+    mkdir -p /opt/app-root && \
+    groupadd -r appuser -f -g 1001 && \
+    useradd -u 1001 -r -g appuser -m -d ${HOME} -s /sbin/nologin \
+        -c "Application User" appuser
+
+COPY ./src/* ${HOME}/
+
+RUN chown -R appuser:appuser /opt/app-root && \
+    chmod -R 755 /opt/app-root && \
+    mkdir /krb5 && \
+    chmod 755 /krb5 /etc/krb5.conf /mssql-jdbc-11.2.0.jre8.jar
+
+VOLUME ["/krb5","/dev/shm","/etc/krb5.conf.d"]
+
+USER appuser
+WORKDIR ${HOME}

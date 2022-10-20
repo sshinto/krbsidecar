@@ -1,0 +1,25 @@
+FROM artifactory.nbsnet.co.uk/docker/ubi7/ubi-init
+
+MAINTAINER marius.farcas@NBS
+
+USER root
+
+ADD rekinit.sh /rekinit.sh
+ADD kkrb5.conf /etc/krb5.conf
+# ADD svcSQLDVVRPW01.keytab /krb5/krb5.keytab
+ADD svcSQLDVVRPW01.keytab /krb5/client.keytab
+
+RUN yum downgrade krb5-libs-1.15.1-51.el7_9.x86_64 -y --disablerepo=ubi* --nogpgcheck && \
+    yum install -y --setopt=tsflags=nodocs krb5-workstation --disablerepo=ubi* --nogpgcheck && \
+    yum update -y --setopt=tsflags=nodocs --disablerepo=ubi* && \
+    yum clean all && \
+#    mkdir /krb5 && \
+    chmod -R 777 /dev/shm && \
+    chmod -R 755 /krb5 && \
+    chmod 755 /etc/krb5.conf /rekinit.sh
+
+VOLUME ["/krb5","/dev/shm","/etc/krb5.conf.d"]
+
+USER 1001
+
+ENTRYPOINT ["/rekinit.sh"]

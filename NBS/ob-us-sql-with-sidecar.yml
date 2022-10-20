@@ -1,0 +1,211 @@
+apiVersion: apps.openshift.io/v1
+kind: DeploymentConfig
+metadata:
+  name: ob-us-sql-pisp-submissions-vrpreq-1-2
+  namespace: openbanking-dev4
+  labels:
+    app: ob-us-sql-pisp-submissions-vrpreq-1-2
+  annotations:
+    openshift.io/generated-by: Jenkins
+spec:
+  replicas: 1
+  selector:
+    deploymentconfig: ob-us-sql-pisp-submissions-vrpreq-1-2
+  strategy:
+    activeDeadlineSeconds: 21600
+    resources: {}
+    rollingParams:
+      intervalSeconds: 1
+      maxSurge: 25%
+      maxUnavailable: 25%
+      timeoutSeconds: 600
+      updatePeriodSeconds: 1
+    type: Rolling
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: ob-us-sql-pisp-submissions-vrpreq-1-2
+        deploymentconfig: ob-us-sql-pisp-submissions-vrpreq-1-2
+        ver: b70c2611
+    spec:
+      containers:
+        - env:
+            - name: JAVA_OPTIONS
+              valueFrom:
+                secretKeyRef:
+                  key: JAVA_OPTIONS
+                  name: submissions-vrpreq-sql-secret-1-2
+            - name: SIGNDB_KEY_FILE_PWD
+              valueFrom:
+                secretKeyRef:
+                  key: SIGNDB_KEY_FILE_PWD
+                  name: submissions-vrpreq-sql-secret-1-2
+            - name: JWT4_KEY_FILE_PWD
+              valueFrom:
+                secretKeyRef:
+                  key: JWT4_KEY_FILE_PWD
+                  name: submissions-vrpreq-sql-secret-1-2
+            - name: SERVER_SSL_KEYSTORE_PWD
+              valueFrom:
+                secretKeyRef:
+                  key: SERVER_SSL_KEYSTORE_PWD
+                  name: submissions-vrpreq-sql-secret-1-2
+            - name: SERVER_SSL_TRUSTSTORE_PWD
+              valueFrom:
+                secretKeyRef:
+                  key: SERVER_SSL_TRUSTSTORE_PWD
+                  name: submissions-vrpreq-sql-secret-1-2
+            - name: JAVAX_SSL_KEYSTORE_PWD
+              valueFrom:
+                secretKeyRef:
+                  key: JAVAX_SSL_KEYSTORE_PWD
+                  name: submissions-vrpreq-sql-secret-1-2
+            - name: JAVAX_SSL_TRUSTSTORE_PWD
+              valueFrom:
+                secretKeyRef:
+                  key: JAVAX_SSL_TRUSTSTORE_PWD
+                  name: submissions-vrpreq-sql-secret-1-2
+            - name: CASSANDRA_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  key: secure.pisp-vrpreq-submission.username
+                  name: cassandra-secret-1-5
+            - name: CASSANDRA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  key: secure.pisp-vrpreq-submission.password
+                  name: cassandra-secret-1-5
+#            - name: KRB5CCNAME
+#		          value: /dev/shm/ccache
+          image: >-
+            docker-registry.default.svc:5000/openbanking-dev4/ob-us-sql-pisp-submissions-vrpreq-1-2:latest
+          imagePullPolicy: Always
+          livenessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 25
+            periodSeconds: 10
+            successThreshold: 1
+            tcpSocket:
+              port: 8443
+            timeoutSeconds: 2
+          name: ob-us-sql-pisp-submissions-vrpreq-1-2
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+            - containerPort: 8443
+              protocol: TCP
+          readinessProbe:
+            failureThreshold: 3
+            initialDelaySeconds: 25
+            periodSeconds: 10
+            successThreshold: 1
+            tcpSocket:
+              port: 8443
+            timeoutSeconds: 2
+          command:
+            - /bin/sh
+            - -c
+            - 'while true; do echo "*** checking if authenticated"; klist ; sleep 5; done'
+          resources: { }
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          volumeMounts:
+            - mountPath: /dev/shm
+              name: ccache
+            - mountPath: /etc/config
+              name: volume-configmap
+            - mountPath: /secret
+              name: volume-secret
+              readOnly: true
+            - mountPath: /etc/krb5.conf
+              name: config
+#	    - env
+#		    - name: PERIOD_SECONDS
+#              value: "10"
+#            - name: OPTIONS
+#              value: -k example@${KRB5_REALM}
+#          image: edseymour/kinit-sidecar
+#          imagePullPolicy: Always
+#          name: kinit-sidecar
+#          resources: {}
+#          terminationMessagePath: /dev/termination-log
+#          terminationMessagePolicy: File
+#          volumeMounts:
+#          - mountPath: /krb5
+#            name: keytabs
+#          - mountPath: /dev/shm
+#            name: ccache
+#          - mountPath: /etc/krb5.conf.d
+#            name: config
+      dnsPolicy: ClusterFirst
+      nodeSelector:
+        node-role.kubernetes.io/compute: 'true'
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+
+      volumes:
+        - name: keytabs
+          configMap:
+            defaultMode: 420
+            name: keytabs
+        - name: volume-configmap
+          configMap:
+            defaultMode: 420
+            name: ob-us-sql-pisp-submissions-vrpreq-1-2
+        - name: volume-secret
+          secret:
+            defaultMode: 420
+            secretName: submissions-vrpreq-sql-secret-1-2
+        - name: volume-cassandra
+          secret:
+            defaultMode: 420
+            secretName: cassandra-secret-1-5
+        - name: ccache
+          secret:
+            name: ccache
+            medium: Memory
+        - name: config
+          configMap:
+            defaultMode: 420
+            name: krb5-client
+  test: false
+  triggers:
+  - type: ConfigChange
+  - imageChangeParams:
+      automatic: true
+      containerNames:
+      - ob-us-sql-pisp-submissions-vrpreq-1-2
+      - kinit-sidecar
+      from:
+        kind: ImageStreamTag
+        name: ${PREFIX}-kinit-sidecar:latest
+    type: ImageChange
+status:
+  availableReplicas: 1
+  conditions:
+    - lastTransitionTime: '2022-08-30T12:45:53Z'
+      lastUpdateTime: '2022-08-30T12:45:55Z'
+      message: >-
+        replication controller "ob-us-sql-pisp-submissions-vrpreq-1-2-8"
+        successfully rolled out
+      reason: NewReplicationControllerAvailable
+      status: 'True'
+      type: Progressing
+    - lastTransitionTime: '2022-08-31T02:05:05Z'
+      lastUpdateTime: '2022-08-31T02:05:05Z'
+      message: Deployment config has minimum availability.
+      status: 'True'
+      type: Available
+  details:
+    causes:
+      - type: Manual
+    message: manual change
+  latestVersion: 8
+  observedGeneration: 30
+  readyReplicas: 1
+  replicas: 1
+  unavailableReplicas: 0
+  updatedReplicas: 1
