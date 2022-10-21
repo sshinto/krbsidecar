@@ -7,7 +7,7 @@ spec:
   replicas: 1
   #assigns labels to the pods for future selection
   selector:
-      app: vrp-sql
+    app: vrp-sql
 
   template:
     metadata:
@@ -17,5 +17,88 @@ spec:
     spec:
       containers:
         - name: vrp-sql-container
+          env:
+            - name: JAVA_OPTIONS
+              valueFrom:
+                secretKeyRef:
+                  key: JAVA_OPTIONS
+                  name: submissions-vrpreq-sql-secret-1-2
+            - name: SIGNDB_KEY_FILE_PWD
+              valueFrom:
+                secretKeyRef:
+                  key: SIGNDB_KEY_FILE_PWD
+                  name: submissions-vrpreq-sql-secret-1-2
+            - name: JWT4_KEY_FILE_PWD
+              valueFrom:
+                secretKeyRef:
+                  key: JWT4_KEY_FILE_PWD
+                  name: submissions-vrpreq-sql-secret-1-2
+            - name: SERVER_SSL_KEYSTORE_PWD
+              valueFrom:
+                secretKeyRef:
+                  key: SERVER_SSL_KEYSTORE_PWD
+                  name: submissions-vrpreq-sql-secret-1-2
+            - name: SERVER_SSL_TRUSTSTORE_PWD
+              valueFrom:
+                secretKeyRef:
+                  key: SERVER_SSL_TRUSTSTORE_PWD
+                  name: submissions-vrpreq-sql-secret-1-2
+            - name: JAVAX_SSL_KEYSTORE_PWD
+              valueFrom:
+                secretKeyRef:
+                  key: JAVAX_SSL_KEYSTORE_PWD
+                  name: submissions-vrpreq-sql-secret-1-2
+            - name: JAVAX_SSL_TRUSTSTORE_PWD
+              valueFrom:
+                secretKeyRef:
+                  key: JAVAX_SSL_TRUSTSTORE_PWD
+                  name: submissions-vrpreq-sql-secret-1-2
           image: >-
-            docker-registry.default.svc:5000/test/test:latest
+            test
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+            - containerPort: 8443
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /etc/config
+              name: volume-configmap
+          resources:
+            limits:
+              memory: 750Mi
+            requests:
+              memory: 350Mi
+          livenessProbe:
+            httpGet:
+              path: >-
+                /actuator/health
+              port: 8081
+              scheme: HTTPS
+            initialDelaySeconds: 60
+            timeoutSeconds: 2
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: >-
+                /actuator/health
+              port: 8081
+              scheme: HTTPS
+            initialDelaySeconds: 60
+            timeoutSeconds: 2
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+          terminationMessagePath: /dev/termination-log
+          imagePullPolicy: Always
+
+        - name: side-car
+          image: edseymour/kinit-sidecar
+          imagePullPolicy: Always
+
+      volumes:
+        - name: volume-configmap
+          configMap:
+            defaultMode: 420
+            name: ob-us-sql-pisp-submissions-vrpreq-1-2
