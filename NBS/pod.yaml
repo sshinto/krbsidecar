@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: vrp-pod
+  labels:
+    env: test-pod
+    type: vrp-sql
+    identifier: vrp-test-pod
+spec:
+  containers:
+    - name: vrp-container
+      image: >-
+        docker-registry.default.svc:5000/test/test:latest
+      imagePullPolicy: Always

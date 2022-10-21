@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vrp-deployment
+spec:
+  #number of replicas generated
+  replicas: 1
+  #assigns labels to the pods for future selection
+  selector:
+    matchLabels:
+      app: vrp-req
+  template:
+    metadata:
+      labels:
+        app: vrp-req
+    spec:
+      containers:
+        - name: vrp-req-container
+          image: >-
+            d docker-registry.default.svc:5000/test/test:latest
+
+
